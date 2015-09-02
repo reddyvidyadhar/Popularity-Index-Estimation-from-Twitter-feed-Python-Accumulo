@@ -1,0 +1,51 @@
+/hw5/accumulo/src/update-script.sh
+hadoop fs -mkdir /data
+hadoop fs -copyFromLocal /hw5/data/*.csv /data
+
+cd /home/guest/cdse/accumulo/accumulo-1.4.2/
+
+accumulo shell -u root -p acc
+setauths -s east,west -u root
+createuser east
+setauths -s east -u east
+createuser west
+setauths -s west -u west
+
+createtable win
+grant Table.READ -t win -u east 
+grant Table.READ -t win -u west 
+setiter -class org.apache.accumulo.core.iterators.user.SummingCombiner -p 10 -t win -majc -minc -scan
+True 
+<enter> 
+<enter> 
+STRING 
+
+createtable lose
+grant Table.READ -t lose -u east 
+grant Table.READ -t lose -u west 
+setiter -class org.apache.accumulo.core.iterators.user.SummingCombiner -p 10 -t lose -majc -minc -scan 
+True 
+<enter> 
+<enter> 
+STRING 
+
+quit 
+bin/tool.sh /home/guest/Desktop/test.jar org.apache.accumulo.examples.simple.mapreduce.WordCount acc guestvb /data win -u root -p acc
+
+accumulo shell -u root -p acc
+table win
+scan
+table lose
+scan
+
+user east
+table win
+scan
+table lose
+scan
+
+user west
+table win
+scan
+table lose
+scan
